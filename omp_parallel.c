@@ -12,7 +12,25 @@ int main()
 	clock_t t1, t2;
 	ot1 = omp_get_wtime();
 	
-	#pragma omp parallel // num_threads(8) // parallelize the following work
+	// <-- (3/22) sum 1~9
+	int JG[10];
+	j = 0;
+	#pragma omp parallel num_threads(10) //private(i)	// By adding this, -> correct
+	{
+		i = omp_get_thread();
+		JG[i] = j;
+		#pragma omp atomic	// i = 8, JG[8] = 22, 		 j += 0....
+							//					  i = 0,
+							// if adding private(i)
+							// i8 = 8, JG[8] = 22, 		  j += i8...
+							//					   i0 = 0, ...		j += i0
+		j += i;
+	}
+	// #pragma omp atomic: vector is okay! but only "+=" or "-=", not "="
+	// reduction is faster than atomic
+	// (3/22) -->
+	
+	#pragma omp parallel num_threads(8) // parallelize the following work
 	{
 		//printf("Hello World (%d,%d,%f) \n",omp_get_thread_num(),omp_get_num_threads(),omp_get_wtime()-ot1);
 		//printf("Hello Program (%d,%d,%f)\n",omp_get_thread_num(),omp_get_num_threads(),omp_get_wtime()-ot1);
@@ -54,11 +72,12 @@ int main()
 		}
 	}
 	
+	// #pragma omp atomic	// Avoid the memory position of j being saved by 2 thread (usually slower)
 	#pragma omp parallel for private(k)
 	for(k=0;k<100;++k)	// To check the correct/incorrect percentage
 	{
 		j = 0;
-		#pragma omp parallel for reduction(+: j)	// To make sure j only be taken 1 time when summing
+		#pragma omp parallel for reduction(+: j)	// = private j, sum all j in all threads
 		for(i=0;i<=10;++i)
 		{
 			j += i;
