@@ -36,7 +36,7 @@ int main()
 			printf("x[%d]=%d\n",i,x[i]);
 		}
 		#endif		// end of if block
-		
+		return 0;
 		// Bubble sort
 		t1 = clock();
 		for(i=0;i<N;++i) 
